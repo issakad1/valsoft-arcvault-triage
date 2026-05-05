@@ -1,0 +1,125 @@
+[
+  {
+    "record_id": "arcvault-1777050585343-v04x0l",
+    "source": "Email",
+    "raw_message": "Hi, I tried logging in this morning and keep getting a 403 error. My account is arcvault.io/user/jsmith. This started after your update last Tuesday.",
+    "processed_at": "2026-04-24T17:09:45.343Z",
+    "model": "llama-3.3-70b-versatile",
+    "classification": {
+      "category": "Bug Report",
+      "priority": "High",
+      "confidence": 0.9,
+      "reasoning": "The runner-up category could be Technical Question, but the mention of a specific error code and a recent update points more strongly towards a Bug Report.",
+      "core_issue": "The user is experiencing a 403 error when trying to log in after a recent update.",
+      "entities": {
+        "account_id": "arcvault.io/user/jsmith",
+        "error_code": "403",
+        "affected_service": "login",
+        "incident_time": "this morning",
+        "urgency_keywords": [
+          "this morning",
+          "keep getting"
+        ]
+      },
+      "suggested_queue": "Engineering",
+      "summary": "The user is experiencing a 403 error when trying to log in, which started after the update last Tuesday. The user's account is arcvault.io/user/jsmith. The issue is preventing the user from accessing the service."
+    },
+    "routing": {
+      "queue": "Engineering",
+      "llm_suggested_queue": "Engineering",
+      "rule_and_llm_agree": true
+    },
+    "escalation_flag": false,
+    "escalation_reasons": []
+  },
+  {
+    "record_id": "arcvault-1777050587789-oc90lg",
+    "source": "Web Form",
+    "raw_message": "We'd love to see a bulk export feature for our audit logs. We're a compliance-heavy org and this would save us hours every month.",
+    "processed_at": "2026-04-24T17:09:47.789Z",
+    "model": "llama-3.3-70b-versatile",
+    "classification": {
+      "category": "Feature Request",
+      "priority": "Medium",
+      "confidence": 0.9,
+      "reasoning": "The message clearly describes a desired functionality, with no plausible alternative categories, but the tone is polite and suggestive rather than imperative.",
+      "core_issue": "The user needs a bulk export feature for audit logs to reduce manual work.",
+      "entities": {
+        "affected_service": "audit logs",
+        "urgency_keywords": [
+          "compliance-heavy",
+          "save us hours"
+        ]
+      },
+      "suggested_queue": "Product",
+      "summary": "The user is requesting a bulk export feature for audit logs to streamline their compliance processes. This feature would significantly reduce their monthly workload. The request is framed as a suggestion rather than a critical need."
+    },
+    "routing": {
+      "queue": "Product",
+      "llm_suggested_queue": "Product",
+      "rule_and_llm_agree": true
+    },
+    "escalation_flag": false,
+    "escalation_reasons": []
+  },
+  {
+    "record_id": "arcvault-1777050590140-63iulr",
+    "source": "Support Portal",
+    "raw_message": "Invoice #8821 shows a charge of $1,240 but our contract rate is $980/month. Can someone look into this?",
+    "processed_at": "2026-04-24T17:09:50.140Z",
+    "model": "llama-3.3-70b-versatile",
+    "classification": {
+      "category": "Billing Issue",
+      "priority": "Medium",
+      "confidence": 0.9,
+      "reasoning": "The message could also be a Technical Question if the user is unsure about how to read the invoice, but the primary concern is a billing discrepancy.",
+      "core_issue": "The user's invoice shows a higher charge than their expected contract rate.",
+      "entities": {
+        "invoice_number": "8821",
+        "dollar_amounts": [
+          1240,
+          980
+        ],
+        "urgency_keywords": [
+          "can someone look into this"
+        ]
+      },
+      "suggested_queue": "Billing",
+      "summary": "The user is reporting a billing discrepancy with their current invoice, showing a charge of $1,240 instead of the expected $980 based on their contract. They are requesting someone to investigate this issue. The user is likely looking for a resolution to this discrepancy."
+    },
+    "routing": {
+      "queue": "Billing",
+      "llm_suggested_queue": "Billing",
+      "rule_and_llm_agree": true
+    },
+    "escalation_flag": false,
+    "escalation_reasons": []
+  },
+  {
+    "record_id": "arcvault-1777050592840-pfmde0",
+    "source": "Email",
+    "raw_message": "I'm not sure if this is the right place to ask, but is there a way to set up SSO with Okta? We're evaluating switching our auth provider.",
+    "processed_at": "2026-04-24T17:09:52.840Z",
+    "model": "llama-3.3-70b-versatile",
+    "classification": {
+      "category": "Technical Question",
+      "priority": "Low",
+      "confidence": 0.7,
+      "reasoning": "The user is asking about setting up SSO with Okta, but they mention they are evaluating switching their auth provider, which could also imply a potential feature request or billing discussion.",
+      "core_issue": "The user is inquiring about setting up Single Sign-On with Okta for their organization.",
+      "entities": {
+        "integration_mentioned": "Okta",
+        "urgency_keywords": []
+      },
+      "suggested_queue": "IT/Security",
+      "summary": "The user is evaluating switching their authentication provider and is inquiring about setting up Single Sign-On with Okta. They are unsure if they are contacting the correct department. The user is seeking information on the possibility of integrating Okta with their current system."
+    },
+    "routing": {
+      "queue": "IT/Security",
+      "llm_suggested_queue": "IT/Security",
+      "rule_and_llm_agree": true
+    },
+    "escalation_flag": false,
+    "escalation_reasons": []
+  }
+]

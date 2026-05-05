@@ -1,0 +1,24 @@
+# Secrets
+.env
+.env.*
+*.key
+credentials.json
+
+# n8n artifacts (none should be committed from this dir anyway)
+database.sqlite*
+*.backup-*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc

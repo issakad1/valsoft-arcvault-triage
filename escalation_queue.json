@@ -1,0 +1,35 @@
+[
+  {
+    "record_id": "arcvault-1777050596376-s9zpgn",
+    "source": "Web Form",
+    "raw_message": "Your dashboard stopped loading for us around 2pm EST. Checked our end \u2014 it's definitely on yours. Multiple users affected.",
+    "processed_at": "2026-04-24T17:09:56.376Z",
+    "model": "llama-3.3-70b-versatile",
+    "classification": {
+      "category": "Incident/Outage",
+      "priority": "High",
+      "confidence": 0.95,
+      "reasoning": "The issue is reported as a sudden stop in service, which aligns more closely with an incident or outage than other categories.",
+      "core_issue": "The ArcVault dashboard stopped loading for multiple users.",
+      "entities": {
+        "affected_service": "dashboard",
+        "incident_time": "around 2pm EST",
+        "urgency_keywords": [
+          "stopped loading",
+          "Multiple users affected"
+        ]
+      },
+      "suggested_queue": "Engineering",
+      "summary": "The ArcVault dashboard stopped loading for multiple users around 2pm EST, and the issue has been confirmed to be on the ArcVault end. The affected users are unable to access the dashboard, indicating a significant disruption in service."
+    },
+    "routing": {
+      "queue": "Escalation",
+      "llm_suggested_queue": "Engineering",
+      "rule_and_llm_agree": false
+    },
+    "escalation_flag": true,
+    "escalation_reasons": [
+      "outage_or_multi_user_keyword_match"
+    ]
+  }
+]

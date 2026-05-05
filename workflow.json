@@ -1,0 +1,130 @@
+{
+  "name": "ArcVault Triage",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "arcvault-triage",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -48
+      ],
+      "id": "9e936d7a-0f90-44d6-84bf-a29676e5f3f6",
+      "name": "Webhook",
+      "webhookId": "c9e1fd92-4720-47f0-a02e-ca9388485eb6"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_GROQ_API_KEY_HERE"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"temperature\": 0.2,\n  \"response_format\": {\n    \"type\": \"json_object\"\n  },\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a support ticket triage assistant for ArcVault, a B2B SaaS company. For each inbound message, classify and enrich it. Return ONLY a JSON object matching this exact schema (no markdown, no preamble):\\n\\n{\\n  \\\"category\\\": \\\"Bug Report\\\" | \\\"Feature Request\\\" | \\\"Billing Issue\\\" | \\\"Technical Question\\\" | \\\"Incident/Outage\\\",\\n  \\\"priority\\\": \\\"Low\\\" | \\\"Medium\\\" | \\\"High\\\",\\n  \\\"confidence\\\": number 0-1,\\n  \\\"reasoning\\\": \\\"1-3 sentences naming runner-up category\\\",\\n  \\\"core_issue\\\": \\\"one sentence\\\",\\n  \\\"entities\\\": {\\n    \\\"account_id\\\": string (optional),\\n    \\\"invoice_number\\\": string (optional),\\n    \\\"error_code\\\": string (optional),\\n    \\\"dollar_amounts\\\": [numbers] (optional),\\n    \\\"affected_service\\\": string (optional),\\n    \\\"incident_time\\\": string (optional),\\n    \\\"integration_mentioned\\\": string (optional),\\n    \\\"urgency_keywords\\\": [strings]\\n  },\\n  \\\"suggested_queue\\\": \\\"Engineering\\\" | \\\"Billing\\\" | \\\"Product\\\" | \\\"IT/Security\\\" | \\\"Escalation\\\",\\n  \\\"summary\\\": \\\"2-3 sentences\\\"\\n}\\n\\nENTITY EXTRACTION RULES:\\nPopulate every entity field that applies. Omit any field not present in the message - do not invent values and do not emit empty strings.\\n- account_id: any user handle, email, or account URL. If a full URL is given in the message, extract the full URL (not just the handle).\\n- invoice_number: any invoice or transaction ID.\\n- error_code: HTTP codes, error numbers, stack trace codes.\\n- dollar_amounts: ALL monetary values mentioned, as numbers.\\n- affected_service: the product component or feature impacted (dashboard, login, API, audit logs, etc.).\\n- incident_time: when the issue started, verbatim from the message.\\n- integration_mentioned: third-party tools (Okta, Salesforce, Jira, etc.). Omit the field entirely if none mentioned - do NOT emit an empty string.\\n- urgency_keywords: ALWAYS include this field. 2-5 verbatim phrases signaling urgency or scope. Use an empty array [] if the tone is calm.\\n\\nCONFIDENCE CALIBRATION (do not default to 1.0):\\n- 0.95-1.0: textbook, zero plausible alternative\\n- 0.85-0.94: clear with minor ambiguity\\n- 0.70-0.84: likely but reasonable alternatives\\n- 0.50-0.69: genuinely ambiguous\\n- below 0.50: guessing\\nA hedge like 'I am not sure if this is the right place' must lower confidence to 0.70 or below.\\n\\nPRIORITY RULES:\\n- Incident/Outage is always High\\n- Billing discrepancies over $500 are High; $100-500 Medium; <$100 Low\\n- Login failures, data loss, security concerns are High\\n- Feature requests default to Medium unless critical\\n- Pre-sales/evaluation questions default to Low\\n\\nQUEUE ROUTING (suggested_queue):\\n- Bug Report or Incident/Outage to Engineering\\n- Billing Issue to Billing\\n- Feature Request to Product\\n- Technical Question to IT/Security\\n- Override to Escalation if confidence<0.7 OR 'outage' keyword OR billing discrepancy>$500\\n\\nReturn ONLY valid JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"={{ $json.body.raw_message }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "0ee9a7ee-4692-49a2-af36-91e59331d0bc",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// === ArcVault Triage - Code Node ===\nconst MODEL = 'llama-3.3-70b-versatile';\n\nconst webhookData = $('Webhook').item.json.body || {};\nconst rawMessage = webhookData.raw_message || '';\nconst source = webhookData.source || 'Unknown';\n\n// Defensive parse of OpenAI/Groq's JSON response\nlet classification;\nlet parseError = null;\ntry {\n  const apiResponse = $input.item.json;\n  const rawText = apiResponse?.choices?.[0]?.message?.content;\n  if (!rawText) {\n    throw new Error('LLM response missing message content');\n  }\n  classification = JSON.parse(rawText);\n} catch (err) {\n  parseError = err.message;\n}\n\n// If LLM output is broken, emit error record routed to Escalation\nif (parseError || !classification?.category) {\n  return {\n    json: {\n      record_id: `arcvault-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,\n      source,\n      raw_message: rawMessage,\n      processed_at: new Date().toISOString(),\n      model: MODEL,\n      classification: null,\n      routing: { queue: 'Escalation' },\n      escalation_flag: true,\n      escalation_reasons: ['llm_output_invalid'],\n      error: parseError || 'Missing classification.category'\n    }\n  };\n}\n\n// Normalize entities: guarantee urgency_keywords exists (Step 3 requires urgency signal),\n// strip empty-string fields that the LLM sometimes emits for absent entities.\nif (!classification.entities || typeof classification.entities !== 'object') {\n  classification.entities = {};\n}\nif (!Array.isArray(classification.entities.urgency_keywords)) {\n  classification.entities.urgency_keywords = [];\n}\nfor (const k of Object.keys(classification.entities)) {\n  if (classification.entities[k] === '' || classification.entities[k] === null) {\n    delete classification.entities[k];\n  }\n}\n\n// Build escalation reasons\nconst escalationReasons = [];\n\nif (typeof classification.confidence === 'number' && classification.confidence < 0.7) {\n  escalationReasons.push('low_confidence');\n}\n\nconst lowerMessage = rawMessage.toLowerCase();\nconst outageKeywords = ['outage', 'down for all users', 'all users affected', 'multiple users affected'];\nif (outageKeywords.some(kw => lowerMessage.includes(kw))) {\n  escalationReasons.push('outage_or_multi_user_keyword_match');\n}\n\nconst dollarAmounts = classification.entities?.dollar_amounts || [];\nconst billingDiscrepancy = dollarAmounts.length >= 2\n  ? Math.max(...dollarAmounts) - Math.min(...dollarAmounts)\n  : 0;\nif (classification.category === 'Billing Issue' && billingDiscrepancy > 500) {\n  escalationReasons.push('billing_discrepancy_over_500');\n}\n\n// Category to queue mapping\nconst categoryToQueue = {\n  'Bug Report': 'Engineering',\n  'Incident/Outage': 'Engineering',\n  'Billing Issue': 'Billing',\n  'Feature Request': 'Product',\n  'Technical Question': 'IT/Security'\n};\n\nconst escalationFlag = escalationReasons.length > 0;\nconst queue = escalationFlag\n  ? 'Escalation'\n  : (categoryToQueue[classification.category] || 'Escalation');\n\nreturn {\n  json: {\n    record_id: `arcvault-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,\n    source,\n    raw_message: rawMessage,\n    processed_at: new Date().toISOString(),\n    model: MODEL,\n    classification,\n    routing: {\n      queue,\n      llm_suggested_queue: classification.suggested_queue,\n      rule_and_llm_agree: classification.suggested_queue === queue\n    },\n    escalation_flag: escalationFlag,\n    escalation_reasons: escalationReasons\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        -48
+      ],
+      "id": "c372267b-df62-4b87-b822-eabf12c727b6",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        624,
+        0
+      ],
+      "id": "da9a5ff2-5017-4d33-9390-b66f6941dcbf",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7dea78f8-7015-43b5-b865-a066b7c57cdd",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "8SUiXmVoPCGBcceA",
+  "tags": []
+}
