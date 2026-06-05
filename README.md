@@ -1,4 +1,4 @@
-# Valsoft AI Engineer Assessment — ArcVault Triage
+ArcVault Triage
 
 ## What this is
 An end-to-end AI workflow that ingests inbound customer messages from ArcVault (a fictional B2B SaaS), classifies them with an LLM, enriches with extracted entities, routes to the correct queue, and flags escalations. Built per the assessment brief (Feb/Apr 2026).
